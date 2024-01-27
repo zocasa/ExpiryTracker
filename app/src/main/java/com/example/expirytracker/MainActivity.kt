@@ -9,7 +9,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,12 +20,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -91,16 +87,7 @@ fun App() {
                 topBar = { AppTopBar() },
                 floatingActionButton = { AddItemFloatingActionButton() }
             ) {
-                innerPadding ->
-                run {
-                    Column(
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        ItemList(SampleItemList.itemList, WARNING_DAYS, SAFE_DAYS)
-                    }
-                }
+                innerPadding -> ItemList(SampleItemList.itemList, WARNING_DAYS, SAFE_DAYS, innerPadding)
             }
         }
     }
@@ -133,7 +120,7 @@ fun AddItemFloatingActionButton() {
 }
 
 @Composable
-fun ItemList(itemInfoList: List<ItemInfo>, warningDays: Int, safeDays: Int) {
+fun ItemList(itemInfoList: List<ItemInfo>, warningDays: Int, safeDays: Int, innerPadding: PaddingValues) {
 //    val currentTime = LocalDate.now()
     val currentTime = LocalDate.of(2024, 1, 25)
 
@@ -146,27 +133,45 @@ fun ItemList(itemInfoList: List<ItemInfo>, warningDays: Int, safeDays: Int) {
     val expiringSoonItemList = getItemsBetweenDays(itemInfoList, 0, safeDays - 1L)
     val safeItemList = getItemsBetweenDays(itemInfoList, safeDays.toLong())
 
-    CategoryCard(expiredItemList)
-    CategoryCard(expiringSoonItemList)
-    CategoryCard(safeItemList)
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun CategoryCard(itemInfoList: List<ItemInfo>) {
-    if (itemInfoList.isNotEmpty()) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(all = 8.dp)
-        ) {
-            LazyColumn(
-                contentPadding = PaddingValues(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.height(240.dp)
-            ) {
-                items(itemInfoList) { ItemInfoCard(it) }
+    LazyColumn(
+        contentPadding = PaddingValues(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.padding(innerPadding),
+    ) {
+        if (expiredItemList.isNotEmpty()) {
+            item {
+                Text(
+                    style = MaterialTheme.typography.titleMedium,
+                    text = "Expired",
+                    modifier = Modifier.padding(all = 8.dp)
+                )
             }
+
+            items(expiredItemList) { ItemInfoCard(it) }
+        }
+
+        if (expiringSoonItemList.isNotEmpty()) {
+            item {
+                Text(
+                    style = MaterialTheme.typography.titleMedium,
+                    text = "Expiring Soon",
+                    modifier = Modifier.padding(all = 8.dp)
+                )
+            }
+
+            items(expiringSoonItemList) { ItemInfoCard(it) }
+        }
+
+        if (safeItemList.isNotEmpty()) {
+            item {
+                Text(
+                    style = MaterialTheme.typography.titleMedium,
+                    text = "Safe",
+                    modifier = Modifier.padding(all = 8.dp)
+                )
+            }
+
+            items(safeItemList) { ItemInfoCard(it) }
         }
     }
 }
