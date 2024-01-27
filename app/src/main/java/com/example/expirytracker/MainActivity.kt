@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,10 +24,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -83,6 +87,7 @@ fun App() {
             color = MaterialTheme.colorScheme.surface,
             modifier = Modifier.fillMaxSize()
         ) {
+//            ItemList(SampleItemList.itemList, WARNING_DAYS, SAFE_DAYS, PaddingValues(all = 8.dp))
             Scaffold(
                 topBar = { AppTopBar() },
                 floatingActionButton = { AddItemFloatingActionButton() }
@@ -102,7 +107,35 @@ fun AppTopBar() {
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer, titleContentColor = MaterialTheme.colorScheme.primary),
         navigationIcon = {
-            Icon(painter = painterResource(R.drawable.profile_picture), contentDescription = "", modifier = Modifier.size(40.dp))
+            Icon(
+                painter = painterResource(R.drawable.profile_picture),
+                contentDescription = "App Icon",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+            )
+        },
+        actions = {
+            IconButton(
+                onClick = { /*TODO*/ },
+                modifier = Modifier.offset(12.dp)
+            ) {
+                Icon(
+                    Icons.Filled.Search,
+                    "Search",
+                    Modifier.size(20.dp)
+                )
+            }
+
+            IconButton(
+                onClick = { /*TODO*/ }
+            ) {
+                Icon(
+                    Icons.Filled.Settings,
+                    "Settings",
+                    Modifier.size(20.dp)
+                )
+            }
         }
     )
 }
@@ -294,6 +327,5 @@ fun getColorWithAlpha(color: Color, alpha: Float): Color {
 fun getItemsBetweenDays(itemInfoList: List<ItemInfo>, min: Long = Long.MIN_VALUE, max: Long = Long.MAX_VALUE): List<ItemInfo> {
     return itemInfoList
         .filter { it.daysRemaining in min..max }
-        .sortedBy { it.name }
-        .sortedBy { it.expiryDate.localDate }
+        .sortedBy { it }
 }
