@@ -240,7 +240,8 @@ fun ItemInfoCard(itemInfo: ItemInfo) {
                 ItemDetailAndAdditionalInformation(itemInfo, isExpended)
             }
 
-            ItemProductLink(itemInfo, isExpended)
+            if (!isExpended)
+                ItemProductLink(itemInfo, Modifier.padding(all = 8.dp))
         }
     }
 }
@@ -269,6 +270,11 @@ fun ItemTitleAndExpiryIndicator(itemInfo: ItemInfo, itemColor: Color, isExpended
                 .background(itemColor, CircleShape)
                 .border(0.5.dp, MaterialTheme.colorScheme.secondary, CircleShape)
         )
+
+        Spacer(modifier = Modifier.weight(1F))
+
+        if (isExpended)
+            ItemProductLink(itemInfo, Modifier.padding(top = 4.dp))
     }
 }
 
@@ -309,14 +315,13 @@ fun ItemDetailAndAdditionalInformation(itemInfo: ItemInfo, isExpended: Boolean) 
 }
 
 @Composable
-fun ItemProductLink(itemInfo: ItemInfo, isExpended: Boolean) {
+fun ItemProductLink(itemInfo: ItemInfo, modifier: Modifier = Modifier) {
     if (itemInfo.productLink != null) {
         Column {
             val uriHandler = LocalUriHandler.current
             ElevatedButton(
-                modifier = Modifier
+                modifier = modifier
                     .align(Alignment.End)
-                    .padding(all = 8.dp)
                     .size(65.dp, 25.dp),
                 shape = MaterialTheme.shapes.medium,
                 onClick = {
