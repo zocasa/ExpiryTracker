@@ -4,8 +4,10 @@ import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -38,15 +41,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.expirytracker.ui.theme.ExpiryTrackerTheme
@@ -56,6 +63,9 @@ import java.time.temporal.ChronoUnit
 
 const val WARNING_DAYS = 15
 const val SAFE_DAYS = 30
+
+//val currentTime = LocalDate.now()
+val CURRENT_TIME: LocalDate = LocalDate.of(2024, 1, 25)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -87,12 +97,12 @@ fun App() {
             color = MaterialTheme.colorScheme.surface,
             modifier = Modifier.fillMaxSize()
         ) {
-//            ItemList(SampleItemList.itemList, WARNING_DAYS, SAFE_DAYS, PaddingValues(all = 8.dp))
             Scaffold(
                 topBar = { AppTopBar() },
                 floatingActionButton = { AddItemFloatingActionButton() }
             ) {
-                innerPadding -> ItemList(SampleItemList.itemList, WARNING_DAYS, SAFE_DAYS, innerPadding)
+                innerPadding ->
+                    ItemList(SampleItemList.itemList, WARNING_DAYS, SAFE_DAYS, innerPadding)
             }
         }
     }
@@ -108,16 +118,17 @@ fun AppTopBar() {
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer, titleContentColor = MaterialTheme.colorScheme.primary),
         navigationIcon = {
             Icon(
-                painter = painterResource(R.drawable.profile_picture),
+                Icons.Filled.AccountCircle,
                 contentDescription = "App Icon",
                 modifier = Modifier
                     .size(40.dp)
-                    .clip(CircleShape)
             )
         },
         actions = {
             IconButton(
-                onClick = { /*TODO*/ },
+                onClick = {
+
+                },
                 modifier = Modifier.offset(12.dp)
             ) {
                 Icon(
@@ -128,7 +139,9 @@ fun AppTopBar() {
             }
 
             IconButton(
-                onClick = { /*TODO*/ }
+                onClick = {
+
+                }
             ) {
                 Icon(
                     Icons.Filled.Settings,
@@ -154,11 +167,8 @@ fun AddItemFloatingActionButton() {
 
 @Composable
 fun ItemList(itemInfoList: List<ItemInfo>, warningDays: Int, safeDays: Int, innerPadding: PaddingValues) {
-//    val currentTime = LocalDate.now()
-    val currentTime = LocalDate.of(2024, 1, 25)
-
     itemInfoList.forEach { itemInfo ->
-        val daysRemaining = ChronoUnit.DAYS.between(currentTime, itemInfo.expiryDate.localDate)
+        val daysRemaining = ChronoUnit.DAYS.between(CURRENT_TIME, itemInfo.expiryDate.localDate)
         itemInfo.daysRemaining = daysRemaining
     }
 
@@ -212,6 +222,8 @@ fun ItemList(itemInfoList: List<ItemInfo>, warningDays: Int, safeDays: Int, inne
 @Composable
 fun ItemInfoCard(itemInfo: ItemInfo) {
     val itemColor = getItemColor(itemInfo.daysRemaining, WARNING_DAYS, SAFE_DAYS)
+    var isExpended by remember { mutableStateOf(false) }
+
     Surface(
         shape = MaterialTheme.shapes.small,
         color = getColorWithAlpha(itemColor, 0.25F),
@@ -219,14 +231,18 @@ fun ItemInfoCard(itemInfo: ItemInfo) {
             .fillMaxWidth()
             .border(0.25.dp, getColorWithAlpha(itemColor, 0.5F), MaterialTheme.shapes.small)
             .border(0.125.dp, Color.DarkGray, MaterialTheme.shapes.small)
+            .clickable { isExpended = !isExpended }
+            .animateContentSize()
     ) {
         Row {
             Column(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                modifier = Modifier
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .weight(1F)
             ) {
-                ItemTitleAndExpiryIndicator(itemInfo, itemColor)
+                ItemTitleAndExpiryIndicator(itemInfo, itemColor, isExpended)
                 Spacer(modifier = Modifier.height(1.dp))
-                ItemDetailAndAdditionalInformation(itemInfo)
+                ItemDetailAndAdditionalInformation(itemInfo, isExpended)
             }
 
             ItemProductLink(itemInfo)
@@ -235,19 +251,24 @@ fun ItemInfoCard(itemInfo: ItemInfo) {
 }
 
 @Composable
-fun ItemTitleAndExpiryIndicator(itemInfo: ItemInfo, itemColor: Color) {
+fun ItemTitleAndExpiryIndicator(itemInfo: ItemInfo, itemColor: Color, isExpended: Boolean) {
     Row {
+        val fontSize = if (isExpended) 23.sp else TextUnit.Unspecified
+
         Text(
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.secondary,
-            text = itemInfo.name
+            text = itemInfo.name,
+            fontSize = fontSize
         )
 
         Spacer(modifier = Modifier.width(3.dp))
 
+        val size = if (isExpended) 15.dp else 10.dp
+
         Box(
             modifier = Modifier
-                .size(10.dp)
+                .size(size)
                 .clip(CircleShape)
                 .align(Alignment.CenterVertically)
                 .background(itemColor, CircleShape)
@@ -257,20 +278,44 @@ fun ItemTitleAndExpiryIndicator(itemInfo: ItemInfo, itemColor: Color) {
 }
 
 @Composable
-fun ItemDetailAndAdditionalInformation(itemInfo: ItemInfo) {
-    Text(
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.primary,
-        text = "${itemInfo.expiryDate.date} ${itemInfo.expiryDate.displayableMonth}, ${itemInfo.expiryDate.year}"
-    )
+fun ItemDetailAndAdditionalInformation(itemInfo: ItemInfo, isExpended: Boolean) {
+    if (!isExpended) {
+        Text(
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            text = "${itemInfo.expiryDate.date} ${itemInfo.expiryDate.displayableMonth}, ${itemInfo.expiryDate.year}"
+        )
+    } else {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            itemInfo.expiryDates.forEach {
+                val daysRemaining = ChronoUnit.DAYS.between(CURRENT_TIME, it.localDate)
+                val itemColor = getItemColor(daysRemaining, WARNING_DAYS, SAFE_DAYS)
+
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = getColorWithAlpha(itemColor, 0.25F),
+                    modifier = Modifier
+                        .border(0.25.dp, getColorWithAlpha(itemColor, 0.5F), MaterialTheme.shapes.small)
+                        .border(0.125.dp, Color.DarkGray, MaterialTheme.shapes.small)
+                ) {
+                    Text(
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        text = "${it.date} ${it.displayableMonth}, ${it.year}",
+                        modifier = Modifier.padding(all = 4.dp)
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
 fun ItemProductLink(itemInfo: ItemInfo) {
     if (itemInfo.productLink != null) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Column {
             val uriHandler = LocalUriHandler.current
             ElevatedButton(
                 modifier = Modifier
