@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -182,51 +183,45 @@ fun ItemList(itemInfoList: List<ItemInfo>, warningDays: Int, safeDays: Int, inne
         modifier = Modifier.padding(innerPadding),
     ) {
         if (expiredItemList.isNotEmpty()) {
-            item {
-                Text(
-                    style = MaterialTheme.typography.titleMedium,
-                    text = "Expired",
-                    modifier = Modifier.padding(all = 8.dp)
-                )
-            }
-
+            item { CategoryText("Expired") }
             items(expiredItemList) { ItemInfoCard(it) }
         }
 
         if (expiringSoonItemList.isNotEmpty()) {
-            item {
-                Text(
-                    style = MaterialTheme.typography.titleMedium,
-                    text = "Expiring Soon",
-                    modifier = Modifier.padding(all = 8.dp)
-                )
-            }
-
+            item { CategoryText("Expiring Soon") }
             items(expiringSoonItemList) { ItemInfoCard(it) }
         }
 
         if (safeItemList.isNotEmpty()) {
-            item {
-                Text(
-                    style = MaterialTheme.typography.titleMedium,
-                    text = "Safe",
-                    modifier = Modifier.padding(all = 8.dp)
-                )
-            }
-
+            item { CategoryText("Safe") }
             items(safeItemList) { ItemInfoCard(it) }
         }
     }
 }
 
 @Composable
+fun CategoryText(text: String) {
+    Text(
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        text = text,
+        modifier = Modifier.padding(all = 8.dp)
+    )
+}
+
+@Composable
 fun ItemInfoCard(itemInfo: ItemInfo) {
     val itemColor = getItemColor(itemInfo.daysRemaining, WARNING_DAYS, SAFE_DAYS)
+
     var isExpended by remember { mutableStateOf(false) }
+    val surfaceColor by animateColorAsState(
+        if (isExpended) MaterialTheme.colorScheme.surface else getColorWithAlpha(itemColor, 0.25F),
+        label = "ItemInfo Card surface color"
+    )
 
     Surface(
         shape = MaterialTheme.shapes.small,
-        color = getColorWithAlpha(itemColor, 0.25F),
+        color = surfaceColor,
         modifier = Modifier
             .fillMaxWidth()
             .border(0.25.dp, getColorWithAlpha(itemColor, 0.5F), MaterialTheme.shapes.small)
@@ -245,7 +240,7 @@ fun ItemInfoCard(itemInfo: ItemInfo) {
                 ItemDetailAndAdditionalInformation(itemInfo, isExpended)
             }
 
-            ItemProductLink(itemInfo)
+            ItemProductLink(itemInfo, isExpended)
         }
     }
 }
@@ -297,6 +292,7 @@ fun ItemDetailAndAdditionalInformation(itemInfo: ItemInfo, isExpended: Boolean) 
                     shape = MaterialTheme.shapes.small,
                     color = getColorWithAlpha(itemColor, 0.25F),
                     modifier = Modifier
+                        .fillMaxWidth()
                         .border(0.25.dp, getColorWithAlpha(itemColor, 0.5F), MaterialTheme.shapes.small)
                         .border(0.125.dp, Color.DarkGray, MaterialTheme.shapes.small)
                 ) {
@@ -313,7 +309,7 @@ fun ItemDetailAndAdditionalInformation(itemInfo: ItemInfo, isExpended: Boolean) 
 }
 
 @Composable
-fun ItemProductLink(itemInfo: ItemInfo) {
+fun ItemProductLink(itemInfo: ItemInfo, isExpended: Boolean) {
     if (itemInfo.productLink != null) {
         Column {
             val uriHandler = LocalUriHandler.current

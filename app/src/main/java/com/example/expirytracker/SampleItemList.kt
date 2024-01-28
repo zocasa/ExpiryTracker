@@ -4,7 +4,7 @@ object SampleItemList {
 
     val itemList = listOf(
         ItemInfo("Paneer", sortedSetOf(ExpiryDate(26, 1, 2024))),
-        ItemInfo("Milk", sortedSetOf(ExpiryDate(30, 1, 2024), ExpiryDate(15, 2, 2024))),
+        ItemInfo("Milk", sortedSetOf(ExpiryDate(30, 1, 2024), ExpiryDate(15, 2, 2024)), "https://www.amazon.com/mery-Grass-Organic-Whole-Supportibackl-248/dp/B06ZYNZ7NF"),
         ItemInfo("Guacamole", sortedSetOf(ExpiryDate(24, 1, 2024)), "https://www.amazon.com/PRODUCE-Hot-Guacamole-Dip-Small/dp/B09WZ9XCZQ"),
         ItemInfo("Strawberry", sortedSetOf(ExpiryDate(20, 1, 2024)), "https://www.amazon.com/produce-aisle-mburring-Organic-Strawberries/dp/B002B8Z98W"),
         ItemInfo("Eggs", sortedSetOf(ExpiryDate(25, 1, 2024)), "https://www.amazon.com/Vital-Farms-Restorative-Pasture-Raised/dp/B09RRDKJ58"),
