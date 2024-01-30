@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -52,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -61,7 +61,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.expirytracker.ui.theme.ExpiryTrackerTheme
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.temporal.ChronoUnit
 
 const val WARNING_DAYS = 15
@@ -96,6 +95,7 @@ fun CollapsedComponentPreview() {
         "https://www.amazon.com/mery-Grass-Organic-Whole-Supportibackl-248/dp/B06ZYNZ7NF"
     )
     ItemInfoCard(itemInfo, false)
+//    App()
 }
 
 @Preview(
@@ -120,16 +120,11 @@ fun ExpendedComponentPreview() {
 @Composable
 fun App() {
     ExpiryTrackerTheme {
-        Surface(
-            color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Scaffold(
-                topBar = { AppTopBar() },
-                floatingActionButton = { AddItemFloatingActionButton() }
-            ) { innerPadding ->
-                ItemList(SampleItemList.itemList, WARNING_DAYS, SAFE_DAYS, innerPadding)
-            }
+        Scaffold(
+            topBar = { AppTopBar() },
+            floatingActionButton = { AddItemFloatingActionButton() }
+        ) { innerPadding ->
+            ItemList(SampleItemList.itemList, innerPadding)
         }
     }
 }
@@ -197,23 +192,21 @@ fun AddItemFloatingActionButton() {
 @Composable
 fun ItemList(
     itemInfoList: List<ItemInfo>,
-    warningDays: Int,
-    safeDays: Int,
     innerPadding: PaddingValues
 ) {
     itemInfoList.forEach { itemInfo ->
-        val daysRemaining = ChronoUnit.DAYS.between(CURRENT_TIME, itemInfo.expiryDate.localDate)
-        itemInfo.daysRemaining = daysRemaining
+        itemInfo.daysRemaining = ChronoUnit.DAYS
+            .between(CURRENT_TIME, itemInfo.expiryDate.localDate)
     }
 
     val expiredItemList = getItemsBetweenDays(itemInfoList, max = -1L)
-    val expiringSoonItemList = getItemsBetweenDays(itemInfoList, 0, safeDays - 1L)
-    val safeItemList = getItemsBetweenDays(itemInfoList, safeDays.toLong())
+    val expiringSoonItemList = getItemsBetweenDays(itemInfoList, 0, SAFE_DAYS - 1L)
+    val safeItemList = getItemsBetweenDays(itemInfoList, SAFE_DAYS.toLong())
 
     LazyColumn(
         contentPadding = PaddingValues(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier.padding(innerPadding),
+        modifier = Modifier.padding(innerPadding)
     ) {
         if (expiredItemList.isNotEmpty()) {
             item { CategoryText("Expired") }
@@ -248,17 +241,14 @@ fun ItemInfoCard(itemInfo: ItemInfo, shouldExpend: Boolean = false) {
 
     var isExpended by remember { mutableStateOf(shouldExpend) }
     val surfaceColor by animateColorAsState(
-        if (isExpended) MaterialTheme.colorScheme.surface else getColorWithAlpha(itemColor, 0.25F),
+        if (isExpended) MaterialTheme.colorScheme.surface else getItemInfoSurfaceColor(itemColor),
         label = "ItemInfo Card surface color"
     )
 
-    Surface(
-        shape = MaterialTheme.shapes.small,
-        color = surfaceColor,
+    ExpirySurface(
+        itemColor = itemColor,
+        surfaceColor = surfaceColor,
         modifier = Modifier
-            .fillMaxWidth()
-            .border(0.25.dp, getColorWithAlpha(itemColor, 0.5F), MaterialTheme.shapes.small)
-            .border(0.125.dp, Color.DarkGray, MaterialTheme.shapes.small)
             .clickable { isExpended = !isExpended }
             .animateContentSize()
     ) {
@@ -298,6 +288,24 @@ fun ItemInfoCard(itemInfo: ItemInfo, shouldExpend: Boolean = false) {
             }
         }
     }
+}
+
+@Composable
+fun ExpirySurface(
+    itemColor: Color,
+    modifier: Modifier = Modifier,
+    surfaceColor: Color = getItemInfoSurfaceColor(itemColor),
+    content: @Composable () -> Unit
+) {
+    Surface(
+        shape = MaterialTheme.shapes.small,
+        color = surfaceColor,
+        modifier = modifier
+            .fillMaxWidth()
+            .border(0.25.dp, getColorWithAlpha(itemColor, 0.5F), MaterialTheme.shapes.small)
+            .border(0.125.dp, Color.DarkGray, MaterialTheme.shapes.small),
+        content = content
+    )
 }
 
 @Composable
@@ -346,68 +354,7 @@ fun ItemDetailAndAdditionalInformation(itemInfo: ItemInfo, isExpended: Boolean) 
             modifier = Modifier.padding(top = 3.dp)
         ) {
             itemInfo.expiryDates.forEach {
-                val daysRemaining = ChronoUnit.DAYS.between(CURRENT_TIME, it.localDate)
-                val itemColor = getItemColor(daysRemaining, WARNING_DAYS, SAFE_DAYS)
-
-                Surface(
-                    shape = MaterialTheme.shapes.small,
-                    color = getColorWithAlpha(itemColor, 0.25F),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(
-                            0.25.dp,
-                            getColorWithAlpha(itemColor, 0.5F),
-                            MaterialTheme.shapes.small
-                        )
-                        .border(0.125.dp, Color.DarkGray, MaterialTheme.shapes.small)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Spacer(modifier = Modifier.width(2.dp))
-
-                        Text(
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            text = "${it.date} ${it.displayableMonth}, ${it.year}",
-                            modifier = Modifier
-                                .padding(all = 4.dp)
-                                .weight(1F)
-                        )
-
-                        IconButton(
-                            modifier = Modifier
-                                .size(20.dp),
-                            onClick = {
-
-                            }
-                        ) {
-                            Icon(
-                                Icons.Filled.Edit,
-                                "Edit Entry",
-                                Modifier.size(15.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(2.dp))
-
-                        IconButton(
-                            modifier = Modifier
-                                .size(20.dp),
-                            onClick = {
-
-                            }
-                        ) {
-                            Icon(
-                                Icons.Filled.Delete,
-                                "Delete Entry",
-                                Modifier.size(15.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(4.dp))
-                    }
-                }
+                ExpendedItemExpiryInfo(it)
             }
         }
     }
@@ -416,32 +363,77 @@ fun ItemDetailAndAdditionalInformation(itemInfo: ItemInfo, isExpended: Boolean) 
 @Composable
 fun ItemProductLink(itemInfo: ItemInfo, modifier: Modifier = Modifier) {
     if (itemInfo.productLink != null) {
-        Column {
-            val uriHandler = LocalUriHandler.current
-            ElevatedButton(
-                modifier = modifier
-                    .align(Alignment.End)
-                    .size(65.dp, 25.dp),
-                shape = MaterialTheme.shapes.medium,
-                onClick = {
-                    uriHandler.openUri(itemInfo.productLink)
-                }
-            ) {
-                Text(
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontSize = 7.sp,
-                    fontWeight = FontWeight.Normal,
-                    text = "Buy",
-                    textAlign = TextAlign.Center,
-                )
+        val uriHandler = LocalUriHandler.current
+        ElevatedButton(
+            modifier = modifier
+                .size(65.dp, 25.dp),
+            shape = MaterialTheme.shapes.medium,
+            onClick = {
+                uriHandler.openUri(itemInfo.productLink)
             }
+        ) {
+            Text(
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.tertiary,
+                fontSize = 7.sp,
+                fontWeight = FontWeight.Normal,
+                text = "Buy",
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
 
-fun isLastDay(date: ExpiryDate): Boolean {
-    return YearMonth.of(date.year, date.month).atEndOfMonth().dayOfMonth == date.date
+@Composable
+fun ExpendedItemExpiryInfo(expiryDate: ExpiryDate) {
+    val daysRemaining = ChronoUnit.DAYS.between(CURRENT_TIME, expiryDate.localDate)
+    val itemColor = getItemColor(daysRemaining, WARNING_DAYS, SAFE_DAYS)
+
+    ExpirySurface(
+        itemColor = itemColor
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Spacer(modifier = Modifier.width(2.dp))
+
+            Text(
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+                text = "${expiryDate.date} ${expiryDate.displayableMonth}, ${expiryDate.year}",
+                modifier = Modifier
+                    .padding(all = 4.dp)
+                    .weight(1F)
+            )
+
+            ExpendedItemExpiryInfoIcon(Icons.Filled.Edit, "Edit Entry") {
+
+            }
+
+            Spacer(modifier = Modifier.width(2.dp))
+
+            ExpendedItemExpiryInfoIcon(Icons.Filled.Delete, "Delete Entry") {
+
+            }
+
+            Spacer(modifier = Modifier.width(4.dp))
+        }
+    }
+}
+
+@Composable
+fun ExpendedItemExpiryInfoIcon(imageVector: ImageVector, contentDescription: String, onClick: () -> Unit) {
+    IconButton(
+        modifier = Modifier
+            .size(20.dp),
+        onClick = onClick
+    ) {
+        Icon(
+            imageVector,
+            contentDescription,
+            Modifier.size(15.dp)
+        )
+    }
 }
 
 fun getItemColor(daysRemaining: Long, warningDays: Int, safeDays: Int, alpha: Float = 1F): Color {
@@ -482,4 +474,8 @@ fun getItemsBetweenDays(
     return itemInfoList
         .filter { it.daysRemaining in min..max }
         .sortedBy { it }
+}
+
+fun getItemInfoSurfaceColor(itemColor: Color): Color {
+    return getColorWithAlpha(itemColor, 0.25F)
 }
