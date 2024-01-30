@@ -127,9 +127,8 @@ fun App() {
             Scaffold(
                 topBar = { AppTopBar() },
                 floatingActionButton = { AddItemFloatingActionButton() }
-            ) {
-                innerPadding ->
-                    ItemList(SampleItemList.itemList, WARNING_DAYS, SAFE_DAYS, innerPadding)
+            ) { innerPadding ->
+                ItemList(SampleItemList.itemList, WARNING_DAYS, SAFE_DAYS, innerPadding)
             }
         }
     }
@@ -142,7 +141,10 @@ fun AppTopBar() {
         title = {
             Text(text = "Expiry Tracker")
         },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer, titleContentColor = MaterialTheme.colorScheme.primary),
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            titleContentColor = MaterialTheme.colorScheme.primary
+        ),
         navigationIcon = {
             Icon(
                 Icons.Filled.AccountCircle,
@@ -193,7 +195,12 @@ fun AddItemFloatingActionButton() {
 }
 
 @Composable
-fun ItemList(itemInfoList: List<ItemInfo>, warningDays: Int, safeDays: Int, innerPadding: PaddingValues) {
+fun ItemList(
+    itemInfoList: List<ItemInfo>,
+    warningDays: Int,
+    safeDays: Int,
+    innerPadding: PaddingValues
+) {
     itemInfoList.forEach { itemInfo ->
         val daysRemaining = ChronoUnit.DAYS.between(CURRENT_TIME, itemInfo.expiryDate.localDate)
         itemInfo.daysRemaining = daysRemaining
@@ -347,7 +354,11 @@ fun ItemDetailAndAdditionalInformation(itemInfo: ItemInfo, isExpended: Boolean) 
                     color = getColorWithAlpha(itemColor, 0.25F),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(0.25.dp, getColorWithAlpha(itemColor, 0.5F), MaterialTheme.shapes.small)
+                        .border(
+                            0.25.dp,
+                            getColorWithAlpha(itemColor, 0.5F),
+                            MaterialTheme.shapes.small
+                        )
                         .border(0.125.dp, Color.DarkGray, MaterialTheme.shapes.small)
                 ) {
                     Row(
@@ -433,7 +444,7 @@ fun isLastDay(date: ExpiryDate): Boolean {
     return YearMonth.of(date.year, date.month).atEndOfMonth().dayOfMonth == date.date
 }
 
-fun getItemColor(daysRemaining: Long, warningDays: Int, safeDays:Int, alpha: Float = 1F): Color {
+fun getItemColor(daysRemaining: Long, warningDays: Int, safeDays: Int, alpha: Float = 1F): Color {
     return if (daysRemaining < 0) {
         Color(Color.Red.red, Color.Red.green, Color.Red.blue, alpha)
     } else if (daysRemaining <= warningDays) {
@@ -447,7 +458,12 @@ fun getItemColor(daysRemaining: Long, warningDays: Int, safeDays:Int, alpha: Flo
     }
 }
 
-fun getGradientColor(percentFinalColor: Float, startColor: Color, endColor: Color, alpha: Float = 1F): Color {
+fun getGradientColor(
+    percentFinalColor: Float,
+    startColor: Color,
+    endColor: Color,
+    alpha: Float = 1F
+): Color {
     val red = (1 - percentFinalColor) * startColor.red + percentFinalColor * endColor.red
     val green = (1 - percentFinalColor) * startColor.green + percentFinalColor * endColor.green
     val blue = (1 - percentFinalColor) * startColor.blue + percentFinalColor * endColor.blue
@@ -458,7 +474,11 @@ fun getColorWithAlpha(color: Color, alpha: Float): Color {
     return Color(color.red, color.green, color.blue, alpha)
 }
 
-fun getItemsBetweenDays(itemInfoList: List<ItemInfo>, min: Long = Long.MIN_VALUE, max: Long = Long.MAX_VALUE): List<ItemInfo> {
+fun getItemsBetweenDays(
+    itemInfoList: List<ItemInfo>,
+    min: Long = Long.MIN_VALUE,
+    max: Long = Long.MAX_VALUE
+): List<ItemInfo> {
     return itemInfoList
         .filter { it.daysRemaining in min..max }
         .sortedBy { it }
