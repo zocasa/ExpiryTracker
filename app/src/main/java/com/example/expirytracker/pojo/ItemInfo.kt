@@ -1,4 +1,4 @@
-package com.example.expirytracker
+package com.example.expirytracker.pojo
 
 import java.util.TreeSet
 
@@ -6,7 +6,7 @@ data class ItemInfo(
     val name: String,
     val expiryDates: TreeSet<ExpiryDate>,
     val productLink: String? = null
-): Comparable<ItemInfo> {
+) : Comparable<ItemInfo> {
     val expiryDate: ExpiryDate
         get() {
             return expiryDates.first()
@@ -24,4 +24,13 @@ data class ItemInfo(
 
         return this.name.compareTo(other.name)
     }
+}
+
+fun List<ItemInfo>.getItemsBetweenDays(
+    min: Long,
+    max: Long
+): List<ItemInfo> {
+    return this
+        .filter { it.daysRemaining in min..max }
+        .sortedBy { it }
 }

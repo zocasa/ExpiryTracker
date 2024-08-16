@@ -59,6 +59,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.expirytracker.pojo.CategoryInfo
+import com.example.expirytracker.pojo.ExpiryDate
+import com.example.expirytracker.pojo.ItemInfo
+import com.example.expirytracker.pojo.getItemsBetweenDays
 import com.example.expirytracker.ui.theme.ExpiryTrackerTheme
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -68,6 +72,11 @@ const val SAFE_DAYS = 30
 
 //val currentTime = LocalDate.now()
 val CURRENT_TIME: LocalDate = LocalDate.of(2024, 1, 25)
+val CATEGORIES: List<CategoryInfo> = listOf(
+    CategoryInfo("Expired", max = -1L),
+    CategoryInfo("Expiring Soon", 0L, SAFE_DAYS - 1L),
+    CategoryInfo("Safe", SAFE_DAYS.toLong())
+)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -199,28 +208,17 @@ fun ItemList(
             .between(CURRENT_TIME, itemInfo.expiryDate.localDate)
     }
 
-    val expiredItemList = getItemsBetweenDays(itemInfoList, max = -1L)
-    val expiringSoonItemList = getItemsBetweenDays(itemInfoList, 0, SAFE_DAYS - 1L)
-    val safeItemList = getItemsBetweenDays(itemInfoList, SAFE_DAYS.toLong())
-
     LazyColumn(
         contentPadding = PaddingValues(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier.padding(innerPadding)
     ) {
-        if (expiredItemList.isNotEmpty()) {
-            item { CategoryText("Expired") }
-            items(expiredItemList) { ItemInfoCard(it) }
-        }
-
-        if (expiringSoonItemList.isNotEmpty()) {
-            item { CategoryText("Expiring Soon") }
-            items(expiringSoonItemList) { ItemInfoCard(it) }
-        }
-
-        if (safeItemList.isNotEmpty()) {
-            item { CategoryText("Safe") }
-            items(safeItemList) { ItemInfoCard(it) }
+        CATEGORIES.forEach { categoryInfo ->
+            val items = itemInfoList.getItemsBetweenDays(categoryInfo.min, categoryInfo.max)
+            if (items.isNotEmpty()) {
+                item { CategoryText(categoryInfo.name) }
+                items(items) { ItemInfoCard(it) }
+            }
         }
     }
 }
@@ -264,6 +262,7 @@ fun ItemInfoCard(itemInfo: ItemInfo, shouldExpend: Boolean = false) {
                     ItemDetailAndAdditionalInformation(itemInfo, isExpended)
                 }
 
+                // TODO touch left ear with left hand
                 if (!isExpended)
                     ItemProductLink(itemInfo, Modifier.padding(all = 8.dp))
             }
@@ -387,6 +386,7 @@ fun ItemProductLink(itemInfo: ItemInfo, modifier: Modifier = Modifier) {
 @Composable
 fun ExpendedItemExpiryInfo(expiryDate: ExpiryDate) {
     val daysRemaining = ChronoUnit.DAYS.between(CURRENT_TIME, expiryDate.localDate)
+    // TODO Calculate once?
     val itemColor = getItemColor(daysRemaining, WARNING_DAYS, SAFE_DAYS)
 
     ExpirySurface(
@@ -422,7 +422,11 @@ fun ExpendedItemExpiryInfo(expiryDate: ExpiryDate) {
 }
 
 @Composable
-fun ExpendedItemExpiryInfoIcon(imageVector: ImageVector, contentDescription: String, onClick: () -> Unit) {
+fun ExpendedItemExpiryInfoIcon(
+    imageVector: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
     IconButton(
         modifier = Modifier
             .size(20.dp),
@@ -464,16 +468,6 @@ fun getGradientColor(
 
 fun getColorWithAlpha(color: Color, alpha: Float): Color {
     return Color(color.red, color.green, color.blue, alpha)
-}
-
-fun getItemsBetweenDays(
-    itemInfoList: List<ItemInfo>,
-    min: Long = Long.MIN_VALUE,
-    max: Long = Long.MAX_VALUE
-): List<ItemInfo> {
-    return itemInfoList
-        .filter { it.daysRemaining in min..max }
-        .sortedBy { it }
 }
 
 fun getItemInfoSurfaceColor(itemColor: Color): Color {

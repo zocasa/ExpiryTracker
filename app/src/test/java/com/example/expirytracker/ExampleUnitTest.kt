@@ -1,5 +1,6 @@
 package com.example.expirytracker
 
+import com.example.expirytracker.pojo.ExpiryDate
 import org.junit.Test
 
 import java.time.LocalDate
@@ -19,6 +20,5 @@ class ExampleUnitTest {
         val daysBetween = ChronoUnit.DAYS.between(currentDate, expiryDate)
 
         val date = ExpiryDate(28, 1, 2024)
-        getItemColor(date, 15, 30)
     }
 }

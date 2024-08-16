@@ -1,4 +1,4 @@
-package com.example.expirytracker
+package com.example.expirytracker.pojo
 
 import java.text.DateFormatSymbols
 import java.time.LocalDate
@@ -8,8 +8,8 @@ data class ExpiryDate(
     val date: Int,
     val month: Int,
     val year: Int,
-    val displayableMonth: String = DateFormatSymbols().months[month-1]
-): Comparable<ExpiryDate> {
+    val displayableMonth: String = DateFormatSymbols().months[month - 1]
+) : Comparable<ExpiryDate> {
     val localDate: LocalDate = LocalDate.of(year, month, date)
 
     override fun compareTo(other: ExpiryDate): Int {
