@@ -2,18 +2,18 @@ package com.example.expirytracker.pojo
 
 import java.util.TreeSet
 
-data class ItemInfo(
+data class ProductInfo(
     val name: String,
     val expiryDates: TreeSet<ExpiryDate>,
     val productLink: String? = null
-) : Comparable<ItemInfo> {
+) : Comparable<ProductInfo> {
     val expiryDate: ExpiryDate
         get() {
             return expiryDates.first()
         }
     var daysRemaining: Long = 0L
 
-    override fun compareTo(other: ItemInfo): Int {
+    override fun compareTo(other: ProductInfo): Int {
         if (this === other)
             return 0
 
@@ -26,11 +26,10 @@ data class ItemInfo(
     }
 }
 
-fun List<ItemInfo>.getItemsBetweenDays(
+fun List<ProductInfo>.getProductsBetweenDays(
     min: Long,
     max: Long
-): List<ItemInfo> {
+): List<ProductInfo> {
     return this
         .filter { it.daysRemaining in min..max }
-        .sortedBy { it }
 }
